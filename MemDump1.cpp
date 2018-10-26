@@ -78,19 +78,19 @@ namespace MemDump{
 	DWORD GetProcByName(std::string& pname)
 	{
 		PROCESSENTRY32 entry;
-    	entry.dwSize = sizeof(PROCESSENTRY32);
+    		entry.dwSize = sizeof(PROCESSENTRY32);
 
-    	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+    		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
 
-    	if (Process32First(snapshot, &entry) == TRUE)
-        	while (Process32Next(snapshot, &entry) == TRUE)
-            	if (stricmp(entry.szExeFile, pname.c_str()) == 0){
-            		CloseHandle(snapshot);
-            		return  entry.th32ProcessID;
-            	}
+    		if (Process32First(snapshot, &entry) == TRUE)
+        		while (Process32Next(snapshot, &entry) == TRUE)
+            		if (stricmp(entry.szExeFile, pname.c_str()) == 0){
+            			CloseHandle(snapshot);
+            			return  entry.th32ProcessID;
+            		}
 
-    	CloseHandle(snapshot);
-    	return 0;
+    		CloseHandle(snapshot);
+    		return 0;
 	}
 
 	VOID EnableDebugPriv()
