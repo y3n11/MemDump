@@ -5,11 +5,31 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <stdio.h>
 #include <map>
 
 
 #pragma comment(lib, "Dbghelp.lib")
 #pragma comment(lib, "Advapi32.lib")
+#pragma comment(lib, "ntdll.lib")
+
+EXTERN_C NTSTATUS NTAPI NtReadVirtualMemory(HANDLE, PVOID, PVOID, ULONG, PULONG);
+
+typedef
+NTSTATUS
+(NTAPI *fpNtReadVirtualMemory)(
+	HANDLE ProcessHandle,
+	PVOID BaseAddress,
+	PVOID Buffer,
+	ULONG NumberOfBytesToRead,
+	PULONG NumberOfBytesReaded
+);
+
+fpNtReadVirtualMemory fNtReadVirtualMemory;
+fpNtReadVirtualMemory orig_NtReadVirtualMemory;
+
+
+
 
 
 namespace Utils{
@@ -132,8 +152,19 @@ namespace MemDump{
 		if(!hFile)
 			Utils::Log("Can't create dumping file .", true, false, false);
 		Utils::Log("File created .", false, false, false);
+		
+		/*CopyFile("C:\\Windows\\System32\\ntdll.dll", "C:\\ProgramData\\n.dll", FALSE);
+		fNtReadVirtualMemory = reinterpret_cast<fpNtReadVirtualMemory>(GetProcAddress(LoadLibraryW(L"C:\\ProgramData\\n.dll"), "NtReadVirtualMemory"));
+		orig_NtReadVirtualMemory = reinterpret_cast<fpNtReadVirtualMemory>(GetProcAddress(LoadLibraryW(L"ntdll"), "NtReadVirtualMemory"));
+		printf("===> New      : %x\n", fNtReadVirtualMemory);
 
-		Utils::Log("Running MiniDumpWriteDump ...", false, false, true)
+		//orig_NtReadVirtualMemory = fNtReadVirtualMemory;
+		//NtReadVirtualMemory = fNtReadVirtualMemory;
+
+		orig_NtReadVirtualMemory = NULL;
+		printf("===> Original : %x\n", orig_NtReadVirtualMemory);*/
+
+		Utils::Log("Running MiniDumpWriteDump ...", false, false, true);
 		BOOL bDmp = MiniDumpWriteDump(hProcHandle, wPid, hFile, (MINIDUMP_TYPE)dwDumpFlags, NULL, NULL, NULL);
 		if(!bDmp)
 			Utils::Log("Can't dump the memory .", true, false, false);
@@ -164,12 +195,12 @@ int main(int argc, char* argv[])
 			Utils::Log("No such process . ", true, false, false);
 
 	if(Utils::IsSet(args, "path"))
-		dProc->dumpfile = args.find("path")->second + "//dump" + pid + ".bin";
+		dProc->dumpfile = args.find("path")->second + "dump" + std::to_string(dProc->pid) + ".bin";
 	else
-		dProc->dumpfile = MemDump::GetDumpDirectory() + "//dump" + std::to_string(pid) + ".bin";
+		dProc->dumpfile = MemDump::GetDumpDirectory() + "dump" + std::to_string(dProc->pid) + ".bin";
 
 
-	Utils::Log("Dumping process " + dProc->pid + " to " + dProc->dumpfile, false, false, true);
+	Utils::Log("Dumping process " + std::to_string(dProc->pid) + " to " + dProc->dumpfile, false, false, true);
 	MemDump::MemDump(dProc->pid, (PCHAR)dProc->dumpfile.c_str());
 
 	return 0;
